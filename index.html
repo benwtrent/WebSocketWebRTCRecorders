@@ -2,15 +2,61 @@
 <title>WebRTC Recorder Example</title>
 
 <meta http-equiv="X-UA-Compatible" content="chrome=1">
-
+<script src="Scripts/adapter.js"></script>
 <script src="Scripts/audioWorker.js"></script>
 <script src="Scripts/videoWorker.js"></script>
 <script src="Scripts/WSAudioRecorder.js"></script>
 <script src="Scripts/WSVideoRecorder.js"></script>
 <input type="hidden" id="audioWSURL" value="ws://127.0.0.1:9000"></input>
-<input type="hidden" id="videoWSURL" value="ws://127.0.0.1:9000"></input>
+<input type="hidden" id="videoWSURL" value="ws://127.0.0.1:9002"></input>
 </head>
 <body>
-<video id="localVideo" autoplay="autoplay" muted="true"></video></div>
-<script src="Scripts/main.js"></script>
+<video id="localVideo" autoplay="autoplay" muted="true"></video>
+<button type="button" id="btnMedia">Start Stream</button>
+<button type="button" id="btnRecVideo">RecordVideo</button>
+<button type="button" id="btnRecAudio">RecordAudio</button>
+<script type="text/javascript">
+    var wsAUDIO = document.getElementById("audioWSURL").value.toString();
+    var wsVIDEO = document.getElementById("videoWSURL").value.toString();
+    var btnMedia = document.getElementById("btnMedia");
+    var btnRecVideo = document.getElementById("btnRecVideo");
+    var btnRecAudio = document.getElementById("btnRecAudio");
+    var localVideo = document.getElementById("localVideo");
+    var localAudioRec;
+    var localVideoRec;
+    var mediaConstraints = { "audio": true, "video": true };
+    var localStream;
+    var audioContext = new AudioContext;
+    var Success = function(stream) {
+       console.log("got the local stream");
+       localStream = stream;
+       attachMediaStream(localVideo, stream);
+    };
+    var Failure = function(error) {
+        alert("Could not get media");
+    };
+
+    btnRecVideo.onclick = function () {
+        if(localStream == 'undefined') {
+          alert("please start stream first");
+        } else {
+            localVideoRec = new WSVideoRecorder(stream, wsVIDEO, 'video-protocol');
+            setTimeout( function() { localVideoRec.record(); }, 500);
+        } 
+    }
+
+    btnRecAudio.onclick = function () {
+        if(localStream == 'undefined') {
+            alert("please start stream first");
+        } else {
+            var input = audioContext.createMediastreamSource(localStream);
+            localAudioRec = new WSAudioRecorder(input, wsAUDIO, 'audio-protocol');
+            setTimeout( function() { localAudioRec.record(); }, 500); 
+        }
+    }
+
+    btnMedia.onclick = function() {
+        getUserMedia(mediaConstraints, Success, Failure);
+    }
+</script>
 </body></html>
